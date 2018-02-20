@@ -39,36 +39,36 @@ type Sig struct {
 }
 
 type SigFileStat struct {
-	file_size        int
-	block_size       uint32
-	blake5           bool
+	file_size  int
+	block_size uint32
+	blake5     bool
 }
 
 type SigFile struct {
-	block_size uint32
-	signatures []Sig
+	block_size       uint32
+	signatures       []Sig
 	crypto_hash_size uint32
-	blake5     bool
+	blake5           bool
 }
 
 func be_to_u32(data []byte) uint32 {
 	return uint32(data[3]) + uint32(data[2])*256 + uint32(data[1])*65536 + uint32(data[0])*65536*256
 }
 func u32_to_le(val uint32) [4]byte {
-    var data [4]byte
-    data[3] = byte((val >> 24) & 0xff)
-    data[2] = byte((val >> 16) & 0xff)
-    data[1] = byte((val >> 8) & 0xff)
+	var data [4]byte
+	data[3] = byte((val >> 24) & 0xff)
+	data[2] = byte((val >> 16) & 0xff)
+	data[1] = byte((val >> 8) & 0xff)
 	data[0] = byte(val & 0xff)
-    return data
+	return data
 }
 func u32_to_be(val uint32) [4]byte {
-    var data [4]byte
-    data[0] = byte((val >> 24) & 0xff)
-    data[1] = byte((val >> 16) & 0xff)
-    data[2] = byte((val >> 8) & 0xff)
+	var data [4]byte
+	data[0] = byte((val >> 24) & 0xff)
+	data[1] = byte((val >> 16) & 0xff)
+	data[2] = byte((val >> 8) & 0xff)
 	data[3] = byte(val & 0xff)
-    return data
+	return data
 }
 func min(a, b int) int {
 	if a > b {
@@ -92,7 +92,7 @@ func NewSigFile(block_size uint32, buf []byte, crypto_sig_size uint32) SigFile {
 		block_size:       block_size,
 		signatures:       sig,
 		blake5:           false,
-        crypto_hash_size: crypto_sig_size,
+		crypto_hash_size: crypto_sig_size,
 	}
 }
 
@@ -129,7 +129,7 @@ func DeserializeSigFileView(on_disk_format []byte) (SigFile, error) { // don't r
 	return SigFile{
 		block_size:       be_to_u32(on_disk_format[4:8]),
 		signatures:       sigs,
-        crypto_hash_size: desired_crypto_hash_size,
+		crypto_hash_size: desired_crypto_hash_size,
 		blake5:           is_blake5,
 	}, nil
 
@@ -138,38 +138,38 @@ func DeserializeSigFileView(on_disk_format []byte) (SigFile, error) { // don't r
 type SigHint struct {
 	crc32_to_sig_index map[uint32][]int
 }
-func (self *SigFile) Serialize(output io.Writer) error {
-    var headerBuffer[12]byte
-    if self.blake5 {
-        copy(headerBuffer[:4], BLAKE5_MAGIC[:])
-    } else {
-        copy(headerBuffer[:4], MD4_MAGIC[:])
-    }
-    var le_buffer [4]byte
-    le_buffer = u32_to_be(self.block_size)
-    copy(headerBuffer[4:8], le_buffer[:])
-    le_buffer = u32_to_be(self.crypto_hash_size)
-    copy(headerBuffer[8:12], le_buffer[:])
-    _, err := output.Write(headerBuffer[:])
-    if err != nil {
-        return err
-    }
-    sigBuffer := make([]byte, 4 + self.crypto_hash_size)
-    for _, sig := range self.signatures {
-        le_buffer = u32_to_be(sig.crc32)
-        copy(sigBuffer[:4], le_buffer[:])
-        copy(sigBuffer[4:], sig.crypto_hash)
-        _, err = output.Write(sigBuffer)
-        if err != nil {
-           return err
-        }
-    }
-    if closer, ok := output.(io.WriteCloser); ok {
-       return closer.Close()
-    }
-    return nil
-}
 
+func (self *SigFile) Serialize(output io.Writer) error {
+	var headerBuffer [12]byte
+	if self.blake5 {
+		copy(headerBuffer[:4], BLAKE5_MAGIC[:])
+	} else {
+		copy(headerBuffer[:4], MD4_MAGIC[:])
+	}
+	var le_buffer [4]byte
+	le_buffer = u32_to_be(self.block_size)
+	copy(headerBuffer[4:8], le_buffer[:])
+	le_buffer = u32_to_be(self.crypto_hash_size)
+	copy(headerBuffer[8:12], le_buffer[:])
+	_, err := output.Write(headerBuffer[:])
+	if err != nil {
+		return err
+	}
+	sigBuffer := make([]byte, 4+self.crypto_hash_size)
+	for _, sig := range self.signatures {
+		le_buffer = u32_to_be(sig.crc32)
+		copy(sigBuffer[:4], le_buffer[:])
+		copy(sigBuffer[4:], sig.crypto_hash)
+		_, err = output.Write(sigBuffer)
+		if err != nil {
+			return err
+		}
+	}
+	if closer, ok := output.(io.WriteCloser); ok {
+		return closer.Close()
+	}
+	return nil
+}
 
 func (self *SigFile) create_sig_hint() SigHint {
 	var hint = SigHint{

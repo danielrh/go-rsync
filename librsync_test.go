@@ -21,10 +21,11 @@
 // WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 package rsync
+
 import (
-"bytes"
-"encoding/hex"
-"testing"
+	"bytes"
+	"encoding/hex"
+	"testing"
 )
 
 var baseFile = []byte(`Mary had a little lamb
@@ -75,59 +76,57 @@ the driver on the train says move on back
 all through the town
 `)
 
-
 func TestSigSerializeDeserialize(t *testing.T) {
-    sig := NewSigFile(11, baseFile, 8);
-    var sigDisk bytes.Buffer
-    err := sig.Serialize(&sigDisk)
-    if err != nil {
-       panic(err)
-    }
-    firstAttempt := hex.EncodeToString(sigDisk.Bytes())
-    sig2, serr := DeserializeSigFileView(sigDisk.Bytes())
-    if serr != nil {
-       panic(serr)
-    }
-    var sigDisk2 bytes.Buffer
-    err = sig2.Serialize(&sigDisk2)
-    if err != nil {
-       panic(err)
-    }
-    secondAttempt := hex.EncodeToString(sigDisk2.Bytes())
-    if firstAttempt != secondAttempt {
-       panic(secondAttempt+ "\nmust ==\n" + firstAttempt)
-    }
+	sig := NewSigFile(11, baseFile, 8)
+	var sigDisk bytes.Buffer
+	err := sig.Serialize(&sigDisk)
+	if err != nil {
+		panic(err)
+	}
+	firstAttempt := hex.EncodeToString(sigDisk.Bytes())
+	sig2, serr := DeserializeSigFileView(sigDisk.Bytes())
+	if serr != nil {
+		panic(serr)
+	}
+	var sigDisk2 bytes.Buffer
+	err = sig2.Serialize(&sigDisk2)
+	if err != nil {
+		panic(err)
+	}
+	secondAttempt := hex.EncodeToString(sigDisk2.Bytes())
+	if firstAttempt != secondAttempt {
+		panic(secondAttempt + "\nmust ==\n" + firstAttempt)
+	}
 }
 
-
 func TestSigDeltaPatch(t *testing.T) {
-    sig := NewSigFile(11, baseFile, 8);
-    var sigDisk bytes.Buffer
-    err := sig.Serialize(&sigDisk)
-    if err != nil {
-       panic(err)
-    }
-    var patchOut bytes.Buffer
-    patchWriter,perr := NewRsyncPatchWriter(sigDisk.Bytes(), &patchOut)
-    if perr != nil {
-        panic(perr)
-    }
-    _, err = patchWriter.Write(changedFile)
-    if err != nil {
-        panic(err)
-    }
-    err = patchWriter.Close()
-    if err != nil {
-       panic(err)
-    }
-    var finalOutput bytes.Buffer
-    err = ApplyPatch(baseFile, patchOut.Bytes(), &finalOutput)
-    if err != nil {
-       panic(err)
-    }
-    fixedHex := hex.EncodeToString(changedFile)
-    finalOutputHex := hex.EncodeToString(finalOutput.Bytes())
-    if fixedHex != finalOutputHex {
-       panic(finalOutputHex + "\nmust ==\n" + fixedHex)
-    }
+	sig := NewSigFile(11, baseFile, 8)
+	var sigDisk bytes.Buffer
+	err := sig.Serialize(&sigDisk)
+	if err != nil {
+		panic(err)
+	}
+	var patchOut bytes.Buffer
+	patchWriter, perr := NewRsyncPatchWriter(sigDisk.Bytes(), &patchOut)
+	if perr != nil {
+		panic(perr)
+	}
+	_, err = patchWriter.Write(changedFile)
+	if err != nil {
+		panic(err)
+	}
+	err = patchWriter.Close()
+	if err != nil {
+		panic(err)
+	}
+	var finalOutput bytes.Buffer
+	err = ApplyPatch(baseFile, patchOut.Bytes(), &finalOutput)
+	if err != nil {
+		panic(err)
+	}
+	fixedHex := hex.EncodeToString(changedFile)
+	finalOutputHex := hex.EncodeToString(finalOutput.Bytes())
+	if fixedHex != finalOutputHex {
+		panic(finalOutputHex + "\nmust ==\n" + fixedHex)
+	}
 }

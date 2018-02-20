@@ -23,8 +23,8 @@
 package main
 
 import (
-    . "github.com/danielrh/go-rsync"
 	"bytes"
+	. "github.com/danielrh/go-rsync"
 	"io"
 	"os"
 )
@@ -64,10 +64,10 @@ func main() {
 			panic(err)
 		}
 		sig := NewSigFile(2048, base.Bytes(), 8)
-        err = sig.Serialize(os.Stdout)
-        if err != nil {
-        panic(err)
-        }
+		err = sig.Serialize(os.Stdout)
+		if err != nil {
+			panic(err)
+		}
 	} else if os.Args[1] == "delta" {
 		sigFile, err := os.Open(os.Args[2])
 		if err != nil {
@@ -91,11 +91,11 @@ func main() {
 		if perr != nil {
 			panic(perr)
 		}
-        //var leendat int64
-        
+		//var leendat int64
+
 		//leendat, err = io.Copy(patchWriter, newFile)
-        //fmt.Fprintf(os.Stderr, "%d %v\n", leendat, err)
-        _, err = patchWriter.Write(newFileBuffer.Bytes()) // simpler for now...single write call to debug
+		//fmt.Fprintf(os.Stderr, "%d %v\n", leendat, err)
+		_, err = patchWriter.Write(newFileBuffer.Bytes()) // simpler for now...single write call to debug
 		if err != nil {
 			panic(err)
 		}
