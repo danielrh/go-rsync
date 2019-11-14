@@ -317,22 +317,24 @@ func (self *RsyncPatchWriter) emit_copy(where int, xlen int) error {
 }
 func (self *RsyncPatchWriter) findAndActOnMatch() (bool, error) {
 	if matchLocations, ok := self.hint.crc32_to_sig_index[self.crc32]; ok {
-		for _, match := range matchLocations {
-			sigInstance := self.sig.signatures[match]
-			if sigInstance.crc32 != self.crc32 {
-				panic("Corrupt hash index")
-			}
+		if len(matchLocations) != 0 {
 			md4_hasher := md4.New()
 			_, _ = md4_hasher.Write(self.buffer[self.ring_buffer_ptr:])
 			_, _ = md4_hasher.Write(self.buffer[:self.ring_buffer_ptr])
 			hash := md4_hasher.Sum(nil)
-			if bytes.Equal(hash[:len(sigInstance.crypto_hash)],
-				sigInstance.crypto_hash) {
-				self.flush_literals(false)
-				err := self.emit_copy(match*len(self.buffer), len(self.buffer))
-				self.ring_buffer_ptr = 0
-				self.buffer_fill = 0
-				return true, err
+			for _, match := range matchLocations {
+				sigInstance := self.sig.signatures[match]
+				if sigInstance.crc32 != self.crc32 {
+					panic("Corrupt hash index")
+				}
+				if bytes.Equal(hash[:len(sigInstance.crypto_hash)],
+					sigInstance.crypto_hash) {
+						self.flush_literals(false)
+						err := self.emit_copy(match*len(self.buffer), len(self.buffer))
+						self.ring_buffer_ptr = 0
+						self.buffer_fill = 0
+						return true, err
+					}
 			}
 		}
 	}
